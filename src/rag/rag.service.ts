@@ -55,10 +55,10 @@ export class RagService implements OnModuleInit {
     });
 
     // Initialize Supabase client
-    this.supabaseClient = createClient(
-      'postgresql://postgres:S36t31ntdt30ql0J@db.cuxdaqoddspsotnkumse.supabase.co:5432/postgres',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1eGRhcW9kZHNwc290bmt1bXNlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTUwMDU2OCwiZXhwIjoyMDY3MDc2NTY4fQ.DK0RWFMmIyaPfe7CxRqyzY-UQwS9_DRcFvToACnm5zc',
-    );
+    // this.supabaseClient = createClient(
+    //   process.env.SUPABASE_URL ?? '',
+    //   process.env.SUPABASE_SERVICE_KEY ?? '',
+    // );
     // this.configService.get('SUPABASE_URL'),
     // this.configService.get('SUPABASE_SERVICE_KEY'),
 
