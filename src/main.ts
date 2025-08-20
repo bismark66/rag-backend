@@ -17,7 +17,6 @@ async function bootstrap() {
       'http://localhost:5173',
       'http://localhost:5175',
       'https://agronomic-chatbot.vercel.app/',
-      'https://agronomic-chatbot.vercel.app/chat/ask',
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     credentials: true,
