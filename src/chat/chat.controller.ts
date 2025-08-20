@@ -13,6 +13,7 @@ export class ChatController {
   @ApiResponse({ status: 201, description: 'Question answered successfully' })
   @ApiBody({ type: AskQuestionDto })
   async askQuestion(@Body() askQuestionDto: AskQuestionDto) {
+    console.log('---', askQuestionDto.question);
     return this.chatService.askQuestion(askQuestionDto.question);
   }
 }

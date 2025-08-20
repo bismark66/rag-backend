@@ -6,6 +6,7 @@ export class ChatService {
   constructor(private readonly ragService: RagService) {}
 
   async askQuestion(question: string) {
+    console.log(question);
     return this.ragService.askQuestion(question);
   }
 }
