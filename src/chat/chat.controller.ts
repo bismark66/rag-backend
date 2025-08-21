@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { ChatService } from './chat.service';
 import { AskQuestionDto } from './dto/ask-question.dto';
@@ -15,5 +15,19 @@ export class ChatController {
   async askQuestion(@Body() askQuestionDto: AskQuestionDto) {
     console.log('---', askQuestionDto.question);
     return this.chatService.askQuestion(askQuestionDto.question);
+  }
+  @Post('follow-up/:conversationId')
+  @ApiBody({ type: AskQuestionDto })
+  async askFollowUp(
+    @Param('conversationId') conversationId: string,
+    @Body() body: AskQuestionDto,
+  ) {
+    return this.chatService.askFollowUpQuestion(body.question, conversationId);
+  }
+
+  // Get conversation history
+  @Get('history/:conversationId')
+  async getHistory(@Param('conversationId') conversationId: string) {
+    return this.chatService.getConversationHistory(conversationId);
   }
 }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/require-await */
 import { Injectable } from '@nestjs/common';
 import { RagService } from '../rag/rag.service';
 
@@ -8,5 +9,13 @@ export class ChatService {
   async askQuestion(question: string) {
     console.log(question);
     return this.ragService.askQuestion(question);
+  }
+
+  async askFollowUpQuestion(question: string, conversationId: string) {
+    return this.ragService.askFollowUpQuestion(question, conversationId);
+  }
+
+  async getConversationHistory(conversationId: string) {
+    return this.ragService.getConversationHistory(conversationId);
   }
 }
