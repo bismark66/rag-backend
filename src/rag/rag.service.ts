@@ -3,18 +3,26 @@
 /* eslint-disable @typescript-eslint/require-await */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/require-await */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ChatGroq } from '@langchain/groq';
 import { PineconeStore } from '@langchain/pinecone';
 import { Pinecone as PineconeClient } from '@pinecone-database/pinecone';
 import { PineconeEmbeddings } from '@langchain/pinecone';
-import { pull } from 'langchain/hub';
+// import { pull } from 'langchain/hub';
 import { StateGraph, Annotation } from '@langchain/langgraph';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 import { Document } from '@langchain/core/documents';
 import { HumanMessage, AIMessage, BaseMessage } from '@langchain/core/messages';
 import { v4 as uuidv4 } from 'uuid';
+
+// Import your custom prompt
+import { customRagPrompt } from '../prompt/rag-prompt';
 
 interface Conversation {
   id: string;
@@ -48,10 +56,10 @@ export class RagService implements OnModuleInit {
   }
 
   private async initializeServices() {
-    // Initialize LLM
+    // Initialize LLM with slightly higher temperature for natural conversation
     this.llm = new ChatGroq({
       model: 'llama-3.3-70b-versatile',
-      temperature: 0,
+      temperature: 0.1,
     });
 
     // Initialize embeddings
@@ -66,8 +74,11 @@ export class RagService implements OnModuleInit {
       maxConcurrency: 5,
     });
 
-    // Load prompt template
-    this.promptTemplate = await pull('rlm/rag-prompt');
+    // // Load prompt template
+    //     this.promptTemplate = await pull('rlm/rag-prompt');
+
+    // Use custom prompt template instead of pulling from hub
+    this.promptTemplate = customRagPrompt;
 
     // Initialize the RAG graph with memory
     await this.initializeGraph();
@@ -145,7 +156,8 @@ export class RagService implements OnModuleInit {
       .compile();
   }
 
-  // Create a new conversation
+  // (createConversation, getConversation, deleteConversation, etc.)
+
   createConversation(): string {
     const conversationId = uuidv4();
     this.conversations.set(conversationId, {
