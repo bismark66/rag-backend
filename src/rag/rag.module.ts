@@ -1,8 +1,17 @@
 import { Module } from '@nestjs/common';
 import { RagService } from './rag.service';
+import { ConversationsModule } from 'src/resources/conversations/conversations.module';
+import { ConversationsService } from 'src/resources/conversations/conversations.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Conversation } from 'src/db/entities/conversations.entity';
+import { Message } from 'src/db/entities/message.entity';
 
 @Module({
-  providers: [RagService],
+  imports: [
+    ConversationsModule,
+    TypeOrmModule.forFeature([Conversation, Message]),
+  ],
+  providers: [RagService, ConversationsService],
   exports: [RagService],
 })
 export class RagModule {}
