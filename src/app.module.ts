@@ -7,6 +7,7 @@ import { DocumentsModule } from './documents/documents.module';
 import { ChatModule } from './chat/chat.module';
 import { ConversationsModule } from './resources/conversations/conversations.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { HttpModule } from '@nestjs/axios';
 
 const ormsettings = require('../ormconfig');
 
@@ -20,6 +21,7 @@ const ormsettings = require('../ormconfig');
     DocumentsModule,
     ChatModule,
     ConversationsModule,
+    HttpModule,
   ],
   controllers: [AppController],
   providers: [AppService],
