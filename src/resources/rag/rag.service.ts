@@ -241,7 +241,7 @@ export class RagService implements OnModuleInit {
 
     const detectApi = async (state: ChatState) => {
       const apiDetection = this.detectApiRequirement(state.question);
-      console.log('apiDetection', apiDetection); // Add this for debugging
+      console.log('apiDetection', apiDetection);
       return {
         requiresApiCall: apiDetection.requiresApi,
         apiName: apiDetection.apiName,
@@ -250,7 +250,7 @@ export class RagService implements OnModuleInit {
     };
 
     const callApi = async (state: ChatState & { apiParams?: any }) => {
-      console.log('callApi state', state); // Add this for debugging
+      console.log('callApi state', state);
       if (!state.requiresApiCall || !state.apiName) {
         return { apiData: null };
       }

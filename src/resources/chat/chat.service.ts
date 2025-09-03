@@ -7,7 +7,6 @@ export class ChatService {
   constructor(private readonly ragService: RagService) {}
 
   async askQuestion(question: string, userId?: string) {
-    console.log(question);
     // This will create a new conversation and save to database
     return this.ragService.askQuestion(question, undefined, userId);
   }
