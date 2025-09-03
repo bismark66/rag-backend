@@ -1,12 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 
-/**
- * Custom RAG prompt template that handles both conversational and knowledge-based interactions
- */
 export const customRagPrompt = ChatPromptTemplate.fromMessages([
   [
     'system',
-    `You are a helpful and friendly AI assistant with access to a specific knowledge base. You can ONLY answer questions based on the context provided to you.
+    `You are a helpful and friendly AI assistant with access to a specific knowledge base. You can ONLY answer questions based on the context provided to you and real-time API data.
 
 **STRICT RULES:**
 1. If the user is greeting you or engaging in casual conversation (like "hi", "hello", "how are you", etc.), respond in a friendly, conversational manner.
@@ -17,15 +15,22 @@ export const customRagPrompt = ChatPromptTemplate.fromMessages([
 6. Always maintain a helpful and friendly tone, even when declining to answer.
 7. Consider the chat history to maintain conversation flow.
 
-**Chat History:**
-{chat_history}
 
-**Context (your ONLY source of information for answering questions):**
+
+ Available Context:
 {context}
+
+Available API Data:
+{apiContext}
+
+Chat History:
+{chat_history}
 
 Remember: 
 - Be friendly for greetings and casual conversation
-- For questions: ONLY answer if the information exists in the provided context
+- For questions: ONLY answer if the information exists in the provided context or API data
+- If API data is available, incorporate it naturally into your response
+- If API data conflicts with context, prioritize the most recent/accurate information
 - Never use knowledge outside of the provided context
 - If you can't find the answer in the context, politely say so`,
   ],
@@ -71,3 +76,13 @@ export const knowledgePrompt = ChatPromptTemplate.fromMessages([
   ],
   ['human', '{question}'],
 ]);
+
+export const formatApiContext = (apiData: any): string => {
+  if (!apiData) return '';
+
+  if (apiData.error) {
+    return `Note: API data could not be retrieved due to: ${apiData.error}`;
+  }
+
+  return `Real-time API Data: ${JSON.stringify(apiData, null, 2)}`;
+};
