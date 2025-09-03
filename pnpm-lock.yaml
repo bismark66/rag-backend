@@ -10,7 +10,7 @@ importers:
     dependencies:
       '@langchain/community':
         specifier: ^0.3.48
-        version: 0.3.48(@browserbasehq/sdk@2.6.0)(@browserbasehq/stagehand@1.14.0(@playwright/test@1.53.2)(deepmerge@4.3.1)(dotenv@17.2.0)(openai@5.8.3(ws@8.18.3)(zod@3.25.76))(zod@3.25.76))(@ibm-cloud/watsonx-ai@1.6.8)(@langchain/core@0.3.62(openai@5.8.3(ws@8.18.3)(zod@3.25.76)))(@langchain/groq@0.2.3(@langchain/core@0.3.62(openai@5.8.3(ws@8.18.3)(zod@3.25.76))))(@pinecone-database/pinecone@5.1.2)(@supabase/supabase-js@2.50.4)(axios@1.10.0)(cheerio@1.1.0)(ibm-cloud-sdk-core@5.4.0)(ignore@5.3.2)(jsonwebtoken@9.0.2)(lodash@4.17.21)(openai@5.8.3(ws@8.18.3)(zod@3.25.76))(pg@8.16.3)(playwright@1.53.2)(typeorm@0.3.26(pg@8.16.3)(reflect-metadata@0.2.2)(ts-node@10.9.2(@swc/core@1.12.11)(@types/node@22.16.2)(typescript@5.8.3)))(weaviate-client@3.6.2)(ws@8.18.3)
+        version: 0.3.48(@browserbasehq/sdk@2.6.0)(@browserbasehq/stagehand@1.14.0(@playwright/test@1.53.2)(deepmerge@4.3.1)(dotenv@17.2.0)(openai@5.8.3(ws@8.18.3)(zod@3.25.76))(zod@3.25.76))(@ibm-cloud/watsonx-ai@1.6.8)(@langchain/core@0.3.62(openai@5.8.3(ws@8.18.3)(zod@3.25.76)))(@langchain/groq@0.2.3(@langchain/core@0.3.62(openai@5.8.3(ws@8.18.3)(zod@3.25.76))))(@pinecone-database/pinecone@5.1.2)(@supabase/supabase-js@2.50.4)(axios@1.11.0)(cheerio@1.1.0)(ibm-cloud-sdk-core@5.4.0)(ignore@5.3.2)(jsonwebtoken@9.0.2)(lodash@4.17.21)(openai@5.8.3(ws@8.18.3)(zod@3.25.76))(pg@8.16.3)(playwright@1.53.2)(typeorm@0.3.26(pg@8.16.3)(reflect-metadata@0.2.2)(ts-node@10.9.2(@swc/core@1.12.11)(@types/node@22.16.2)(typescript@5.8.3)))(weaviate-client@3.6.2)(ws@8.18.3)
       '@langchain/core':
         specifier: ^0.3.62
         version: 0.3.62(openai@5.8.3(ws@8.18.3)(zod@3.25.76))
@@ -26,6 +26,9 @@ importers:
       '@langchain/textsplitters':
         specifier: ^0.1.0
         version: 0.1.0(@langchain/core@0.3.62(openai@5.8.3(ws@8.18.3)(zod@3.25.76)))
+      '@nestjs/axios':
+        specifier: ^4.0.1
+        version: 4.0.1(@nestjs/common@11.1.3(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.11.0)(rxjs@7.8.2)
       '@nestjs/common':
         specifier: ^11.0.1
         version: 11.1.3(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -50,6 +53,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.50.4
         version: 2.50.4
+      axios:
+        specifier: ^1.11.0
+        version: 1.11.0
       cheerio:
         specifier: ^1.1.0
         version: 1.1.0
@@ -64,7 +70,7 @@ importers:
         version: 17.2.0
       langchain:
         specifier: ^0.3.29
-        version: 0.3.29(@langchain/core@0.3.62(openai@5.8.3(ws@8.18.3)(zod@3.25.76)))(@langchain/groq@0.2.3(@langchain/core@0.3.62(openai@5.8.3(ws@8.18.3)(zod@3.25.76))))(axios@1.10.0)(cheerio@1.1.0)(openai@5.8.3(ws@8.18.3)(zod@3.25.76))(typeorm@0.3.26(pg@8.16.3)(reflect-metadata@0.2.2)(ts-node@10.9.2(@swc/core@1.12.11)(@types/node@22.16.2)(typescript@5.8.3)))(ws@8.18.3)
+        version: 0.3.29(@langchain/core@0.3.62(openai@5.8.3(ws@8.18.3)(zod@3.25.76)))(@langchain/groq@0.2.3(@langchain/core@0.3.62(openai@5.8.3(ws@8.18.3)(zod@3.25.76))))(axios@1.11.0)(cheerio@1.1.0)(openai@5.8.3(ws@8.18.3)(zod@3.25.76))(typeorm@0.3.26(pg@8.16.3)(reflect-metadata@0.2.2)(ts-node@10.9.2(@swc/core@1.12.11)(@types/node@22.16.2)(typescript@5.8.3)))(ws@8.18.3)
       pg:
         specifier: ^8.16.3
         version: 8.16.3
@@ -1297,6 +1303,13 @@ packages:
     resolution: {integrity: sha512-Sqih1YARrmMoHlXGgI9JrrgkzxcaaEso0AH+Y7j8NHonUs+xe4iDsgC3IBIDNdzEewbNpccNN6hip+b5vmyRLw==}
     engines: {node: '>= 10'}
 
+  '@nestjs/axios@4.0.1':
+    resolution: {integrity: sha512-68pFJgu+/AZbWkGu65Z3r55bTsCPlgyKaV4BSG8yUAD72q1PPuyVRgUwFv6BxdnibTUHlyxm06FmYWNC+bjN7A==}
+    peerDependencies:
+      '@nestjs/common': ^10.0.0 || ^11.0.0
+      axios: ^1.3.1
+      rxjs: ^7.0.0
+
   '@nestjs/cli@11.0.7':
     resolution: {integrity: sha512-svrP8j1R0/lQVJ8ZI3BlDtuZxmkvVJokUJSB04sr6uibunk2wHeVDDVLZvYBUorCdGU/RHJl1IufhqUBM91vAQ==}
     engines: {node: '>= 20.11'}
@@ -2166,6 +2179,9 @@ packages:
 
   axios@1.10.0:
     resolution: {integrity: sha512-/1xYAC4MP/HEG+3duIhFr4ZQXR4sQXOIe+o6sdqzeykGLx6Upp/1p8MHqhINOvGeP7xyNHe7tsiJByc4SSVUxw==}
+
+  axios@1.11.0:
+    resolution: {integrity: sha512-1Lx3WLFQWm3ooKDYZD1eXmoGO9fxYQjrycfHFC8P0sCfQVXyROp0p9PFWBehewBOdCwHc+f/b8I0fMto5eSfwA==}
 
   b4a@1.6.7:
     resolution: {integrity: sha512-OnAYlL5b7LEkALw87fUVafQw5rVR9RjwGd4KUwNQ6DrrNmaVaUCgLipfVlzrPQ4tWOR9P0IXGNOx50jYCCdSJg==}
@@ -3123,6 +3139,10 @@ packages:
 
   form-data@4.0.3:
     resolution: {integrity: sha512-qsITQPfmvMOSAdeyZ+12I1c+CKSstAFAwu+97zrnWAbIr5u8wfsExUzCesVLC8NgHuRUqNN4Zy6UPWUTRGslcA==}
+    engines: {node: '>= 6'}
+
+  form-data@4.0.4:
+    resolution: {integrity: sha512-KrGhL9Q4zjj0kiUt5OO4Mr/A/jlI2jDYs5eHBpYHPcBEVSiipAvn2Ko2HnPe20rmcuuvMHNdZFp+4IlGTMF0Ow==}
     engines: {node: '>= 6'}
 
   formdata-node@4.4.1:
@@ -6137,7 +6157,7 @@ snapshots:
 
   '@js-sdsl/ordered-map@4.4.2': {}
 
-  '@langchain/community@0.3.48(@browserbasehq/sdk@2.6.0)(@browserbasehq/stagehand@1.14.0(@playwright/test@1.53.2)(deepmerge@4.3.1)(dotenv@17.2.0)(openai@5.8.3(ws@8.18.3)(zod@3.25.76))(zod@3.25.76))(@ibm-cloud/watsonx-ai@1.6.8)(@langchain/core@0.3.62(openai@5.8.3(ws@8.18.3)(zod@3.25.76)))(@langchain/groq@0.2.3(@langchain/core@0.3.62(openai@5.8.3(ws@8.18.3)(zod@3.25.76))))(@pinecone-database/pinecone@5.1.2)(@supabase/supabase-js@2.50.4)(axios@1.10.0)(cheerio@1.1.0)(ibm-cloud-sdk-core@5.4.0)(ignore@5.3.2)(jsonwebtoken@9.0.2)(lodash@4.17.21)(openai@5.8.3(ws@8.18.3)(zod@3.25.76))(pg@8.16.3)(playwright@1.53.2)(typeorm@0.3.26(pg@8.16.3)(reflect-metadata@0.2.2)(ts-node@10.9.2(@swc/core@1.12.11)(@types/node@22.16.2)(typescript@5.8.3)))(weaviate-client@3.6.2)(ws@8.18.3)':
+  '@langchain/community@0.3.48(@browserbasehq/sdk@2.6.0)(@browserbasehq/stagehand@1.14.0(@playwright/test@1.53.2)(deepmerge@4.3.1)(dotenv@17.2.0)(openai@5.8.3(ws@8.18.3)(zod@3.25.76))(zod@3.25.76))(@ibm-cloud/watsonx-ai@1.6.8)(@langchain/core@0.3.62(openai@5.8.3(ws@8.18.3)(zod@3.25.76)))(@langchain/groq@0.2.3(@langchain/core@0.3.62(openai@5.8.3(ws@8.18.3)(zod@3.25.76))))(@pinecone-database/pinecone@5.1.2)(@supabase/supabase-js@2.50.4)(axios@1.11.0)(cheerio@1.1.0)(ibm-cloud-sdk-core@5.4.0)(ignore@5.3.2)(jsonwebtoken@9.0.2)(lodash@4.17.21)(openai@5.8.3(ws@8.18.3)(zod@3.25.76))(pg@8.16.3)(playwright@1.53.2)(typeorm@0.3.26(pg@8.16.3)(reflect-metadata@0.2.2)(ts-node@10.9.2(@swc/core@1.12.11)(@types/node@22.16.2)(typescript@5.8.3)))(weaviate-client@3.6.2)(ws@8.18.3)':
     dependencies:
       '@browserbasehq/stagehand': 1.14.0(@playwright/test@1.53.2)(deepmerge@4.3.1)(dotenv@17.2.0)(openai@5.8.3(ws@8.18.3)(zod@3.25.76))(zod@3.25.76)
       '@ibm-cloud/watsonx-ai': 1.6.8
@@ -6149,7 +6169,7 @@ snapshots:
       flat: 5.0.2
       ibm-cloud-sdk-core: 5.4.0
       js-yaml: 4.1.0
-      langchain: 0.3.29(@langchain/core@0.3.62(openai@5.8.3(ws@8.18.3)(zod@3.25.76)))(@langchain/groq@0.2.3(@langchain/core@0.3.62(openai@5.8.3(ws@8.18.3)(zod@3.25.76))))(axios@1.10.0)(cheerio@1.1.0)(openai@5.8.3(ws@8.18.3)(zod@3.25.76))(typeorm@0.3.26(pg@8.16.3)(reflect-metadata@0.2.2)(ts-node@10.9.2(@swc/core@1.12.11)(@types/node@22.16.2)(typescript@5.8.3)))(ws@8.18.3)
+      langchain: 0.3.29(@langchain/core@0.3.62(openai@5.8.3(ws@8.18.3)(zod@3.25.76)))(@langchain/groq@0.2.3(@langchain/core@0.3.62(openai@5.8.3(ws@8.18.3)(zod@3.25.76))))(axios@1.11.0)(cheerio@1.1.0)(openai@5.8.3(ws@8.18.3)(zod@3.25.76))(typeorm@0.3.26(pg@8.16.3)(reflect-metadata@0.2.2)(ts-node@10.9.2(@swc/core@1.12.11)(@types/node@22.16.2)(typescript@5.8.3)))(ws@8.18.3)
       langsmith: 0.3.41(openai@5.8.3(ws@8.18.3)(zod@3.25.76))
       openai: 5.8.3(ws@8.18.3)(zod@3.25.76)
       uuid: 10.0.0
@@ -6356,6 +6376,12 @@ snapshots:
       '@napi-rs/nice-win32-ia32-msvc': 1.0.4
       '@napi-rs/nice-win32-x64-msvc': 1.0.4
     optional: true
+
+  '@nestjs/axios@4.0.1(@nestjs/common@11.1.3(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.11.0)(rxjs@7.8.2)':
+    dependencies:
+      '@nestjs/common': 11.1.3(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      axios: 1.11.0
+      rxjs: 7.8.2
 
   '@nestjs/cli@11.0.7(@swc/cli@0.6.0(@swc/core@1.12.11)(chokidar@4.0.3))(@swc/core@1.12.11)(@types/node@22.16.2)':
     dependencies:
@@ -7428,6 +7454,14 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
+  axios@1.11.0:
+    dependencies:
+      follow-redirects: 1.15.9(debug@4.4.1)
+      form-data: 4.0.4
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+
   b4a@1.6.7: {}
 
   babel-jest@29.7.0(@babel/core@7.28.0):
@@ -8416,6 +8450,14 @@ snapshots:
       hasown: 2.0.2
       mime-types: 2.1.35
 
+  form-data@4.0.4:
+    dependencies:
+      asynckit: 0.4.0
+      combined-stream: 1.0.8
+      es-set-tostringtag: 2.1.0
+      hasown: 2.0.2
+      mime-types: 2.1.35
+
   formdata-node@4.4.1:
     dependencies:
       node-domexception: 1.0.0
@@ -9209,7 +9251,7 @@ snapshots:
 
   kleur@3.0.3: {}
 
-  langchain@0.3.29(@langchain/core@0.3.62(openai@5.8.3(ws@8.18.3)(zod@3.25.76)))(@langchain/groq@0.2.3(@langchain/core@0.3.62(openai@5.8.3(ws@8.18.3)(zod@3.25.76))))(axios@1.10.0)(cheerio@1.1.0)(openai@5.8.3(ws@8.18.3)(zod@3.25.76))(typeorm@0.3.26(pg@8.16.3)(reflect-metadata@0.2.2)(ts-node@10.9.2(@swc/core@1.12.11)(@types/node@22.16.2)(typescript@5.8.3)))(ws@8.18.3):
+  langchain@0.3.29(@langchain/core@0.3.62(openai@5.8.3(ws@8.18.3)(zod@3.25.76)))(@langchain/groq@0.2.3(@langchain/core@0.3.62(openai@5.8.3(ws@8.18.3)(zod@3.25.76))))(axios@1.11.0)(cheerio@1.1.0)(openai@5.8.3(ws@8.18.3)(zod@3.25.76))(typeorm@0.3.26(pg@8.16.3)(reflect-metadata@0.2.2)(ts-node@10.9.2(@swc/core@1.12.11)(@types/node@22.16.2)(typescript@5.8.3)))(ws@8.18.3):
     dependencies:
       '@langchain/core': 0.3.62(openai@5.8.3(ws@8.18.3)(zod@3.25.76))
       '@langchain/openai': 0.5.18(@langchain/core@0.3.62(openai@5.8.3(ws@8.18.3)(zod@3.25.76)))(ws@8.18.3)
@@ -9225,7 +9267,7 @@ snapshots:
       zod: 3.25.76
     optionalDependencies:
       '@langchain/groq': 0.2.3(@langchain/core@0.3.62(openai@5.8.3(ws@8.18.3)(zod@3.25.76)))
-      axios: 1.10.0(debug@4.4.1)
+      axios: 1.11.0
       cheerio: 1.1.0
       typeorm: 0.3.26(pg@8.16.3)(reflect-metadata@0.2.2)(ts-node@10.9.2(@swc/core@1.12.11)(@types/node@22.16.2)(typescript@5.8.3))
     transitivePeerDependencies:

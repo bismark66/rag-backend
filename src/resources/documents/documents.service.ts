@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
 import { Document } from '@langchain/core/documents';
-import { RagService } from '../rag/rag.service';
+import { RagService } from 'src/resources/rag/rag.service';
 import { CheerioWebBaseLoader } from '@langchain/community/document_loaders/web/cheerio';
 // import { CheerioWebBaseLoader } from 'langchain/document_loaders/web/cheerio';
 // import { SelectorType } from '@langchain/community/document_loaders/web/cheerio';

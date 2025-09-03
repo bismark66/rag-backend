@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/restrict-template-expressions */
+/* eslint-disable @typescript-eslint/no-base-to-string */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/require-await */
@@ -8,7 +10,12 @@
 /* eslint-disable @typescript-eslint/require-await */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ChatGroq } from '@langchain/groq';
 import { PineconeStore } from '@langchain/pinecone';
@@ -22,8 +29,12 @@ import { HumanMessage, AIMessage, BaseMessage } from '@langchain/core/messages';
 import { ConversationsService } from 'src/resources/conversations/conversations.service';
 
 // Import your custom prompt
-import { customRagPrompt } from '../prompt/rag-prompt';
+import { customRagPrompt, formatApiContext } from '../../prompt/rag-prompt';
 import { MessageRole, MessageType } from 'src/db/entities/message.entity';
+
+// Import ApiService
+import { ApiService } from 'src/common/utils/api.service';
+import { HttpService } from '@nestjs/axios';
 
 interface Conversation {
   id: string;
@@ -37,6 +48,9 @@ interface ChatState {
   context: any[];
   answer: string;
   chat_history: BaseMessage[];
+  apiData?: any; // Add API data field
+  requiresApiCall?: boolean; // Flag for API calls
+  apiName?: string; // Which API to call
 }
 
 @Injectable()
@@ -51,6 +65,8 @@ export class RagService implements OnModuleInit {
   constructor(
     private configService: ConfigService,
     private conversationService: ConversationsService,
+    private readonly httpService: HttpService,
+    @Inject(ApiService) private readonly apiService: ApiService,
   ) {
     this.conversations = new Map();
   }
@@ -88,6 +104,128 @@ export class RagService implements OnModuleInit {
     await this.initializeGraph();
   }
 
+  // Add API detection method
+  private extractCityFromQuestion(question: string): string {
+    const questionLower = question.toLowerCase();
+
+    // List of common location prepositions
+    const locationPrepositions = ['in', 'at', 'for', 'of', 'near'];
+
+    // Common weather-related words that might follow a city name
+    const weatherWords = [
+      'weather',
+      'temperature',
+      'forecast',
+      'humidity',
+      'wind',
+      'rain',
+      'cloud',
+      'today',
+      'tomorrow',
+      'per',
+      'the',
+    ];
+
+    const words = questionLower.split(/\s+/);
+
+    for (let i = 0; i < words.length; i++) {
+      if (
+        locationPrepositions.includes(words[i].toLowerCase()) &&
+        i + 1 < words.length
+      ) {
+        // Found a preposition, now collect the city name
+        const cityWords: string[] = [];
+        let j = i + 1;
+
+        // Collect words until we hit a weather-related word or end of sentence
+        while (
+          j < words.length &&
+          !weatherWords.includes(words[j].toLowerCase().replace(/[.,?]/g, ''))
+        ) {
+          cityWords.push(words[j]);
+          j++;
+        }
+
+        if (cityWords.length > 0) {
+          const potentialCity = cityWords
+            .join(' ')
+            .replace(/[.,?]/g, '')
+            .trim();
+
+          // Basic validation - city should be 1-3 words typically
+          if (
+            potentialCity.length > 1 &&
+            potentialCity.split(' ').length <= 3
+          ) {
+            return potentialCity;
+          }
+        }
+      }
+    }
+
+    // If no city found with preposition pattern, look for direct mentions
+    const directPattern =
+      /(weather|temperature|forecast|rain)\s+in\s+([a-zA-Z\s]+?)(?=\s|\.|\?|$)/i;
+    const directMatch = question.match(directPattern);
+    if (directMatch && directMatch[2]) {
+      return directMatch[2].trim();
+    }
+
+    return '';
+  }
+
+  private detectApiRequirement(question: string): {
+    requiresApi: boolean;
+    apiName?: string;
+    params?: any;
+  } {
+    const questionLower = question.toLowerCase();
+
+    // Weather-related queries
+    if (
+      questionLower.includes('weather') ||
+      questionLower.includes('temperature') ||
+      questionLower.includes('forecast') ||
+      questionLower.includes('humidity') ||
+      questionLower.includes('wind') ||
+      questionLower.includes('rain') ||
+      questionLower.includes('cloud')
+    ) {
+      const city = this.extractCityFromQuestion(question);
+      console.log('Extracted city:', city);
+
+      if (!city) {
+        return { requiresApi: false };
+      }
+
+      return {
+        requiresApi: true,
+        apiName: 'weather',
+        params: {
+          city: city,
+        },
+      };
+    }
+
+    // News-related queries
+    if (
+      questionLower.includes('news') ||
+      questionLower.includes('headlines') ||
+      questionLower.includes('latest news')
+    ) {
+      return {
+        requiresApi: true,
+        apiName: 'news',
+        params: {
+          country: 'us',
+          pageSize: 5,
+        },
+      };
+    }
+
+    return { requiresApi: false };
+  }
+
   private async initializeGraph() {
     // Define state using Annotation for newer LangGraph versions
     const StateAnnotation = Annotation.Root({
@@ -95,7 +233,41 @@ export class RagService implements OnModuleInit {
       context: Annotation<any[]>(),
       answer: Annotation<string>(),
       chat_history: Annotation<BaseMessage[]>(),
+      apiData: Annotation<any>(),
+      requiresApiCall: Annotation<boolean>(),
+      apiName: Annotation<string>(),
+      apiParams: Annotation<any>(),
     });
+
+    const detectApi = async (state: ChatState) => {
+      const apiDetection = this.detectApiRequirement(state.question);
+      console.log('apiDetection', apiDetection); // Add this for debugging
+      return {
+        requiresApiCall: apiDetection.requiresApi,
+        apiName: apiDetection.apiName,
+        ...(apiDetection.params && { apiParams: apiDetection.params }),
+      };
+    };
+
+    const callApi = async (state: ChatState & { apiParams?: any }) => {
+      console.log('callApi state', state); // Add this for debugging
+      if (!state.requiresApiCall || !state.apiName) {
+        return { apiData: null };
+      }
+
+      try {
+        const apiData = await this.apiService.callApi(
+          state.apiName,
+          state.apiParams || {},
+        );
+        return { apiData };
+      } catch (error) {
+        console.error('API call failed:', error);
+        return {
+          apiData: { error: `Failed to fetch data from ${state.apiName} API` },
+        };
+      }
+    };
 
     const retrieve = async (state: ChatState) => {
       const retrievedDocs = await this.vectorStore.similaritySearch(
@@ -110,6 +282,9 @@ export class RagService implements OnModuleInit {
         .map((doc: any) => doc.pageContent)
         .join('\n');
 
+      // Format API context safely
+      const apiContext = formatApiContext(state.apiData);
+
       // Format chat history for context
       const formattedHistory = state.chat_history
         .map((msg: BaseMessage) =>
@@ -122,24 +297,12 @@ export class RagService implements OnModuleInit {
       const messages = await this.promptTemplate.invoke({
         question: state.question,
         context: docsContent,
+        apiContext: apiContext,
         chat_history: formattedHistory,
       });
 
       const response = await this.llm.invoke(messages);
-
-      // Extract string content from the response
-      const answerContent =
-        typeof response.content === 'string'
-          ? response.content
-          : Array.isArray(response.content)
-            ? response.content
-                .map((item: any) =>
-                  typeof item === 'string'
-                    ? item
-                    : item.text || JSON.stringify(item),
-                )
-                .join(' ')
-            : JSON.stringify(response.content);
+      const answerContent = this.extractResponseContent(response);
 
       return {
         answer: answerContent,
@@ -152,17 +315,18 @@ export class RagService implements OnModuleInit {
     };
 
     this.graph = new StateGraph(StateAnnotation)
+      .addNode('detectApi', detectApi)
+      .addNode('callApi', callApi)
       .addNode('retrieve', retrieve)
       .addNode('generate', generate)
-      .addEdge('__start__', 'retrieve')
+      .addEdge('__start__', 'detectApi')
+      .addEdge('detectApi', 'callApi')
+      .addEdge('callApi', 'retrieve')
       .addEdge('retrieve', 'generate')
       .addEdge('generate', '__end__')
       .compile();
   }
 
-  // here
-
-  // New database-backed methods
   async createConversation(userId?: string, title?: string): Promise<string> {
     const conversation = await this.conversationService.createConversation({
       userId,
@@ -262,19 +426,6 @@ export class RagService implements OnModuleInit {
     };
   }
 
-  // (createConversation, getConversation, deleteConversation, etc.)
-
-  // createConversation(): string {
-  //   const conversationId = uuidv4();
-  //   this.conversations.set(conversationId, {
-  //     id: conversationId,
-  //     messages: [],
-  //     createdAt: new Date(),
-  //     updatedAt: new Date(),
-  //   });
-  //   return conversationId;
-  // }
-
   // Get conversation
   getConversation(conversationId: string): Conversation | null {
     return this.conversations.get(conversationId) || null;
@@ -358,66 +509,19 @@ export class RagService implements OnModuleInit {
     );
   }
 
-  // async askQuestion(question: string, conversationId?: string) {
-  //   let chatHistory: BaseMessage[] = [];
-  //   let currentConversationId = conversationId;
-
-  //   // If no conversation ID provided, create a new conversation
-  //   if (!currentConversationId) {
-  //     currentConversationId = this.createConversation();
-  //   } else {
-  //     // Get existing conversation history
-  //     const conversation = this.conversations.get(currentConversationId);
-  //     if (conversation) {
-  //       chatHistory = conversation.messages;
-  //     } else {
-  //       // If conversation ID doesn't exist, create a new one
-  //       currentConversationId = this.createConversation();
-  //     }
-  //   }
-
-  //   const result = await this.graph.invoke({
-  //     question,
-  //     chat_history: chatHistory,
-  //   });
-
-  //   // Update conversation history
-  //   const conversation = this.conversations.get(currentConversationId)!;
-  //   conversation.messages = result.chat_history;
-  //   conversation.updatedAt = new Date();
-
-  //   return {
-  //     question,
-  //     answer: result.answer,
-  //     conversationId: currentConversationId,
-  //     timestamp: new Date().toISOString(),
-  //     history: conversation.messages.slice(0, -2),
-  //   };
-  // }
-
-  // Method to handle follow-up questions
-  // async askFollowUpQuestion(question: string, conversationId: string) {
-  //   if (!this.conversations.has(conversationId)) {
-  //     throw new Error('Conversation not found');
-  //   }
-
-  //   return this.askQuestion(question, conversationId);
-  // }
-
-  // Get conversation history
-  // getConversationHistory(conversationId: string) {
-  //   const conversation = this.conversations.get(conversationId);
-  //   if (!conversation) {
-  //     throw new Error('Conversation not found');
-  //   }
-
-  //   return {
-  //     conversationId,
-  //     messages: conversation.messages,
-  //     createdAt: conversation.createdAt,
-  //     updatedAt: conversation.updatedAt,
-  //   };
-  // }
+  private extractResponseContent(response: any): string {
+    if (typeof response.content === 'string') {
+      return response.content;
+    } else if (Array.isArray(response.content)) {
+      return response.content
+        .map((item: any) =>
+          typeof item === 'string' ? item : item.text || JSON.stringify(item),
+        )
+        .join(' ');
+    } else {
+      return JSON.stringify(response.content);
+    }
+  }
 
   async addDocuments(documents: Document[]) {
     const splitter = new RecursiveCharacterTextSplitter({

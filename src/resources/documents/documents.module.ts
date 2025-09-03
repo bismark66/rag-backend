@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { DocumentsController } from './documents.controller';
 import { DocumentsService } from './documents.service';
-import { RagModule } from '../rag/rag.module';
+import { RagModule } from 'src/resources/rag/rag.module';
 
 @Module({
   imports: [RagModule],
