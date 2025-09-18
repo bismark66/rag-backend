@@ -16,10 +16,9 @@ import {
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { ChatGroq } from '@langchain/groq';
 import { PineconeStore } from '@langchain/pinecone';
-import { Pinecone as PineconeClient } from '@pinecone-database/pinecone';
+// import { Pinecone as PineconeClient } from '@pinecone-database/pinecone';
 import { PineconeEmbeddings } from '@langchain/pinecone';
 // import { pull } from 'langchain/hub';
 import { StateGraph, Annotation } from '@langchain/langgraph';
@@ -34,24 +33,12 @@ import { MessageRole, MessageType } from 'src/db/entities/message.entity';
 
 // Import ApiService
 import { ApiService } from 'src/common/utils/api.service';
-import { HttpService } from '@nestjs/axios';
 
-interface Conversation {
-  id: string;
-  messages: BaseMessage[];
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-interface ChatState {
-  question: string;
-  context: any[];
-  answer: string;
-  chat_history: BaseMessage[];
-  apiData?: any; // Add API data field
-  requiresApiCall?: boolean; // Flag for API calls
-  apiName?: string; // Which API to call
-}
+import { Conversation } from './models/conversation.model';
+import { ChatState } from './models/chat-state.model';
+import { EmbeddingsFactory } from './embeddings.factory';
+import { VectorStoreFactory } from './vector-store.factory';
+import { LlmFactory } from './llm.factory';
 
 @Injectable()
 export class RagService implements OnModuleInit {
@@ -63,9 +50,7 @@ export class RagService implements OnModuleInit {
   private conversations: Map<string, Conversation>;
 
   constructor(
-    private configService: ConfigService,
     private conversationService: ConversationsService,
-    private readonly httpService: HttpService,
     @Inject(ApiService) private readonly apiService: ApiService,
   ) {
     this.conversations = new Map();
@@ -76,26 +61,12 @@ export class RagService implements OnModuleInit {
   }
 
   private async initializeServices() {
-    // Initialize LLM with slightly higher temperature for natural conversation
-    this.llm = new ChatGroq({
-      model: 'llama-3.3-70b-versatile',
-      temperature: 0.1,
-    });
-
-    // Initialize embeddings
-    this.embeddings = new PineconeEmbeddings({
-      model: 'multilingual-e5-large',
-    });
-
-    // Initialize Pinecone
-    const pinecone = new PineconeClient();
-    this.vectorStore = new PineconeStore(this.embeddings, {
-      pineconeIndex: pinecone.Index('test'),
-      maxConcurrency: 5,
-    });
-
-    // // Load prompt template
-    //     this.promptTemplate = await pull('rlm/rag-prompt');
+    // Use factories for LLM, embeddings, and vector store
+    this.llm = LlmFactory.createDefaultLlm();
+    this.embeddings = EmbeddingsFactory.createDefaultEmbeddings();
+    this.vectorStore = VectorStoreFactory.createDefaultVectorStore(
+      this.embeddings,
+    );
 
     // Use custom prompt template instead of pulling from hub
     this.promptTemplate = customRagPrompt;
@@ -258,7 +229,7 @@ export class RagService implements OnModuleInit {
       try {
         const apiData = await this.apiService.callApi(
           state.apiName,
-          state.apiParams || {},
+          (state.apiParams ?? {}) as Record<string, any>,
         );
         return { apiData };
       } catch (error) {
@@ -301,7 +272,7 @@ export class RagService implements OnModuleInit {
         chat_history: formattedHistory,
       });
 
-      const response = await this.llm.invoke(messages);
+      const response = await this.llm.invoke(messages as any); // TODO: Refine type for messages
       const answerContent = this.extractResponseContent(response);
 
       return {
@@ -397,7 +368,7 @@ export class RagService implements OnModuleInit {
     await this.conversationService.addMessagePair(
       currentConversationId,
       question,
-      result.answer,
+      result.answer as string,
       {
         messageType,
         context: result.context || '',
