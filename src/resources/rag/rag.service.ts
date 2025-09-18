@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
 /* eslint-disable @typescript-eslint/no-base-to-string */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
@@ -18,9 +20,7 @@ import {
 } from '@nestjs/common';
 import { ChatGroq } from '@langchain/groq';
 import { PineconeStore } from '@langchain/pinecone';
-// import { Pinecone as PineconeClient } from '@pinecone-database/pinecone';
 import { PineconeEmbeddings } from '@langchain/pinecone';
-// import { pull } from 'langchain/hub';
 import { StateGraph, Annotation } from '@langchain/langgraph';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 import { Document } from '@langchain/core/documents';
@@ -29,6 +29,14 @@ import { ConversationsService } from 'src/resources/conversations/conversations.
 
 // Import your custom prompt
 import { customRagPrompt, formatApiContext } from '../../prompt/rag-prompt';
+import {
+  buildApiPrompt,
+  buildGreetingPrompt,
+} from '../../prompt/prompt-builders';
+import {
+  isGreetingOrCasual,
+  extractResponseContent,
+} from '../../common/utils/utils';
 import { MessageRole, MessageType } from 'src/db/entities/message.entity';
 
 // Import ApiService
@@ -39,6 +47,7 @@ import { ChatState } from './models/chat-state.model';
 import { EmbeddingsFactory } from './embeddings.factory';
 import { VectorStoreFactory } from './vector-store.factory';
 import { LlmFactory } from './llm.factory';
+import { QueryDecomposerService } from './query-decomposer.service';
 
 @Injectable()
 export class RagService implements OnModuleInit {
@@ -52,6 +61,7 @@ export class RagService implements OnModuleInit {
   constructor(
     private conversationService: ConversationsService,
     @Inject(ApiService) private readonly apiService: ApiService,
+    private readonly queryDecomposer: QueryDecomposerService,
   ) {
     this.conversations = new Map();
   }
@@ -68,134 +78,13 @@ export class RagService implements OnModuleInit {
       this.embeddings,
     );
 
-    // Use custom prompt template instead of pulling from hub
     this.promptTemplate = customRagPrompt;
 
-    // Initialize the RAG graph with memory
+    // Initialize the RAG graph
     await this.initializeGraph();
   }
 
-  // Add API detection method
-  private extractCityFromQuestion(question: string): string {
-    const questionLower = question.toLowerCase();
-
-    // List of common location prepositions
-    const locationPrepositions = ['in', 'at', 'for', 'of', 'near'];
-
-    // Common weather-related words that might follow a city name
-    const weatherWords = [
-      'weather',
-      'temperature',
-      'forecast',
-      'humidity',
-      'wind',
-      'rain',
-      'cloud',
-      'today',
-      'tomorrow',
-      'per',
-      'the',
-    ];
-
-    const words = questionLower.split(/\s+/);
-
-    for (let i = 0; i < words.length; i++) {
-      if (
-        locationPrepositions.includes(words[i].toLowerCase()) &&
-        i + 1 < words.length
-      ) {
-        // Found a preposition, now collect the city name
-        const cityWords: string[] = [];
-        let j = i + 1;
-
-        // Collect words until we hit a weather-related word or end of sentence
-        while (
-          j < words.length &&
-          !weatherWords.includes(words[j].toLowerCase().replace(/[.,?]/g, ''))
-        ) {
-          cityWords.push(words[j]);
-          j++;
-        }
-
-        if (cityWords.length > 0) {
-          const potentialCity = cityWords
-            .join(' ')
-            .replace(/[.,?]/g, '')
-            .trim();
-
-          // Basic validation - city should be 1-3 words typically
-          if (
-            potentialCity.length > 1 &&
-            potentialCity.split(' ').length <= 3
-          ) {
-            return potentialCity;
-          }
-        }
-      }
-    }
-
-    // If no city found with preposition pattern, look for direct mentions
-    const directPattern =
-      /(weather|temperature|forecast|rain)\s+in\s+([a-zA-Z\s]+?)(?=\s|\.|\?|$)/i;
-    const directMatch = question.match(directPattern);
-    if (directMatch && directMatch[2]) {
-      return directMatch[2].trim();
-    }
-
-    return '';
-  }
-
-  private detectApiRequirement(question: string): {
-    requiresApi: boolean;
-    apiName?: string;
-    params?: any;
-  } {
-    const questionLower = question.toLowerCase();
-
-    // Weather-related queries
-    if (
-      questionLower.includes('weather') ||
-      questionLower.includes('temperature') ||
-      questionLower.includes('forecast') ||
-      questionLower.includes('humidity') ||
-      questionLower.includes('wind') ||
-      questionLower.includes('rain') ||
-      questionLower.includes('cloud')
-    ) {
-      const city = this.extractCityFromQuestion(question);
-      console.log('Extracted city:', city);
-
-      if (!city) {
-        return { requiresApi: false };
-      }
-
-      return {
-        requiresApi: true,
-        apiName: 'weather',
-        params: {
-          city: city,
-        },
-      };
-    }
-
-    // News-related queries
-    if (
-      questionLower.includes('news') ||
-      questionLower.includes('headlines') ||
-      questionLower.includes('latest news')
-    ) {
-      return {
-        requiresApi: true,
-        apiName: 'news',
-        params: {
-          country: 'us',
-          pageSize: 5,
-        },
-      };
-    }
-
-    return { requiresApi: false };
-  }
+  // LLM-based query decomposition and reformulation is now handled by QueryDecomposerService
 
   private async initializeGraph() {
     // Define state using Annotation for newer LangGraph versions
@@ -210,21 +99,12 @@ export class RagService implements OnModuleInit {
       apiParams: Annotation<any>(),
     });
 
-    const detectApi = async (state: ChatState) => {
-      const apiDetection = this.detectApiRequirement(state.question);
-      console.log('apiDetection', apiDetection);
-      return {
-        requiresApiCall: apiDetection.requiresApi,
-        apiName: apiDetection.apiName,
-        ...(apiDetection.params && { apiParams: apiDetection.params }),
-      };
-    };
+    // No longer used: detectApiRequirement. LLM-based decomposition is now used before graph invocation.
+    const detectApi = async () => ({ requiresApiCall: false });
 
     const callApi = async (state: ChatState & { apiParams?: any }) => {
       console.log('callApi state', state);
-      if (!state.requiresApiCall || !state.apiName) {
-        return { apiData: null };
-      }
+      if (!state.requiresApiCall || !state.apiName) return { apiData: null };
 
       try {
         const apiData = await this.apiService.callApi(
@@ -253,10 +133,10 @@ export class RagService implements OnModuleInit {
         .map((doc: any) => doc.pageContent)
         .join('\n');
 
-      // Format API context safely
+      // format API context
       const apiContext = formatApiContext(state.apiData);
 
-      // Format chat history for context
+      // format chat history for context
       const formattedHistory = state.chat_history
         .map((msg: BaseMessage) =>
           msg._getType() === 'human'
@@ -272,8 +152,8 @@ export class RagService implements OnModuleInit {
         chat_history: formattedHistory,
       });
 
-      const response = await this.llm.invoke(messages as any); // TODO: Refine type for messages
-      const answerContent = this.extractResponseContent(response);
+      const response = await this.llm.invoke(messages as any);
+      const answerContent = extractResponseContent(response);
 
       return {
         answer: answerContent,
@@ -314,7 +194,6 @@ export class RagService implements OnModuleInit {
     return await this.conversationService.getConversationStats(conversationId);
   }
 
-  // Modified askQuestion method to use database
   async askQuestion(
     question: string,
     conversationId?: string,
@@ -322,78 +201,155 @@ export class RagService implements OnModuleInit {
   ) {
     const startTime = Date.now();
     let currentConversationId = conversationId;
-
-    // Create new conversation if none provided
     if (!currentConversationId) {
       currentConversationId = await this.createConversation(userId);
     }
-
-    // Get existing conversation and build chat history
     const conversation = await this.conversationService.getConversation(
       currentConversationId,
     );
-    if (!conversation) {
-      throw new NotFoundException('Conversation not found');
-    }
-
-    // Convert database messages to LangChain format
+    if (!conversation) throw new NotFoundException('Conversation not found');
     const chatHistory: BaseMessage[] = conversation.messages.map((msg) =>
       msg.role === MessageRole.USER
         ? new HumanMessage(msg.content)
         : new AIMessage(msg.content),
     );
 
-    // Process through your existing RAG graph
-    const result = await this.graph.invoke({
+    if (isGreetingOrCasual(question)) {
+      return this.handleGreeting(
+        question,
+        currentConversationId,
+        conversation,
+        startTime,
+      );
+    }
+    return this.handleDecomposed(
       question,
-      chat_history: chatHistory,
-    });
+      currentConversationId,
+      conversation,
+      chatHistory,
+      startTime,
+    );
+  }
 
+  private async handleGreeting(
+    question: string,
+    conversationId: string,
+    conversation: { messages: any[]; [key: string]: any },
+    startTime: number,
+  ) {
+    const convPrompt = buildGreetingPrompt(question);
+    const convResponse = await this.llm.invoke(convPrompt);
+    const answer = extractResponseContent(convResponse);
     const processingTime = Date.now() - startTime;
-
-    // Determine message type (you can enhance this logic)
-    const messageType = this.isGreetingOrCasual(question)
-      ? MessageType.CONVERSATIONAL
-      : MessageType.RAG;
-
-    // Save to database
+    const messageType = MessageType.CONVERSATIONAL;
     const messageMetadata = {
       processingTime,
-      retrievedDocsCount: Array.isArray(result.context)
-        ? result.context.length
-        : 0,
+      retrievedDocsCount: 0,
       timestamp: new Date().toISOString(),
     };
-
     await this.conversationService.addMessagePair(
-      currentConversationId,
+      conversationId,
       question,
-      result.answer as string,
+      answer,
       {
         messageType,
-        context: result.context || '',
+        context: JSON.stringify([]),
         metadata: messageMetadata,
       },
     );
-
-    // Update conversation title if it's the first exchange
-    if (conversation.messages.length === 0 && !conversation.title) {
+    if (conversation.messages.length === 0 && !conversation['title']) {
       const title =
         question.length > 50 ? question.substring(0, 47) + '...' : question;
-      await this.conversationService.updateConversation(currentConversationId, {
+      await this.conversationService.updateConversation(conversationId, {
         title,
       });
     }
-
     return {
       question,
-      answer: result.answer,
-      conversationId: currentConversationId,
+      answer,
+      conversationId,
       timestamp: new Date().toISOString(),
       processingTime,
       messageType,
-      // Keep backward compatibility
-      history: chatHistory,
+      history: [],
+    };
+  }
+
+  private async handleDecomposed(
+    question: string,
+    conversationId: string,
+    conversation: { messages: any[]; [key: string]: any },
+    chatHistory: BaseMessage[],
+    startTime: number,
+  ) {
+    const decomposition =
+      await this.queryDecomposer.decomposeAndReformulate(question);
+    console.log('Decomposed Queries:', decomposition);
+    const answers: string[] = [];
+    const contexts: any[] = [];
+    let lastResult: any = null;
+    for (const q of decomposition.queries) {
+      let result;
+      if (q.requiresApi && q.apiName) {
+        const apiData = await this.apiService.callApi(
+          q.apiName,
+          q.apiParams ?? {},
+        );
+        const isFarmingQuery =
+          /plant|farming|farm|agriculture|sow|harvest|crop|season/i.test(
+            q.reformulatedQuery,
+          );
+        const apiPrompt = buildApiPrompt({
+          userQuestion: q.reformulatedQuery,
+          apiData,
+          isFarmingQuery,
+        });
+        const apiResponse = await this.llm.invoke(apiPrompt);
+        const answer = extractResponseContent(apiResponse);
+        result = { answer, context: [] };
+      } else {
+        result = await this.graph.invoke({
+          question: q.reformulatedQuery,
+          chat_history: chatHistory,
+        });
+      }
+      answers.push(String(result.answer));
+      if (Array.isArray(result.context))
+        contexts.push(...(result.context as any[]));
+      lastResult = result;
+    }
+    const processingTime = Date.now() - startTime;
+    const messageType = MessageType.RAG;
+    const messageMetadata = {
+      processingTime,
+      retrievedDocsCount: contexts.length,
+      timestamp: new Date().toISOString(),
+    };
+    await this.conversationService.addMessagePair(
+      conversationId,
+      question,
+      answers.join('\n'),
+      {
+        messageType,
+        context: JSON.stringify(contexts),
+        metadata: messageMetadata,
+      },
+    );
+    if (conversation.messages.length === 0 && !conversation['title']) {
+      const title =
+        question.length > 50 ? question.substring(0, 47) + '...' : question;
+      await this.conversationService.updateConversation(conversationId, {
+        title,
+      });
+    }
+    return {
+      question,
+      answer: answers.join('\n'),
+      conversationId,
+      timestamp: new Date().toISOString(),
+      processingTime,
+      messageType,
+      history: lastResult?.chat_history || [],
     };
   }
 
@@ -462,36 +418,6 @@ export class RagService implements OnModuleInit {
       createdAt: conversation.createdAt,
       updatedAt: conversation.updatedAt,
     };
-  }
-
-  // Helper method
-  private isGreetingOrCasual(input: string): boolean {
-    const greetingPatterns = [
-      /^(hi|hello|hey|greetings)/i,
-      /^(how are you|how's it going|what's up)/i,
-      /^(good morning|good afternoon|good evening)/i,
-      /^(thanks|thank you|bye|goodbye)/i,
-    ];
-
-    const trimmedInput = input.trim().toLowerCase();
-    return (
-      greetingPatterns.some((pattern) => pattern.test(trimmedInput)) ||
-      ['hi', 'hello', 'hey', 'thanks', 'bye', 'sup'].includes(trimmedInput)
-    );
-  }
-
-  private extractResponseContent(response: any): string {
-    if (typeof response.content === 'string') {
-      return response.content;
-    } else if (Array.isArray(response.content)) {
-      return response.content
-        .map((item: any) =>
-          typeof item === 'string' ? item : item.text || JSON.stringify(item),
-        )
-        .join(' ');
-    } else {
-      return JSON.stringify(response.content);
-    }
   }
 
   async addDocuments(documents: Document[]) {
