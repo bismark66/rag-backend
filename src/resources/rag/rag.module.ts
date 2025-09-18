@@ -7,6 +7,9 @@ import { Conversation } from 'src/db/entities/conversations.entity';
 import { Message } from 'src/db/entities/message.entity';
 import { ApiService } from 'src/common/utils/api.service';
 import { HttpModule } from '@nestjs/axios';
+import { QueryDecomposerService } from './query-decomposer.service';
+import { ChatGroq } from '@langchain/groq';
+import { LlmFactory } from './llm.factory';
 
 @Module({
   imports: [
@@ -14,7 +17,16 @@ import { HttpModule } from '@nestjs/axios';
     TypeOrmModule.forFeature([Conversation, Message]),
     HttpModule,
   ],
-  providers: [RagService, ConversationsService, ApiService],
+  providers: [
+    {
+      provide: ChatGroq,
+      useFactory: () => LlmFactory.createDefaultLlm(),
+    },
+    RagService,
+    ConversationsService,
+    ApiService,
+    QueryDecomposerService,
+  ],
   exports: [RagService],
 })
 export class RagModule {}
