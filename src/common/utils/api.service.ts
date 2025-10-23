@@ -33,6 +33,16 @@ export class ApiService {
     this.initializeApiConfigs();
   }
 
+  /**
+   * ApiService centralizes calls to external HTTP APIs used by the RAG pipeline.
+   * - apiConfigs: map of logical apiName -> ApiConfig (endpoint, method, headers, responseMapping)
+   * - callApi(apiName, params): performs the HTTP call and returns the normalized response
+   *
+   * Error handling:
+   * - Throws when api config is missing
+   * - Logs and rethrows when HTTP requests fail
+   */
+
   private initializeApiConfigs() {
     this.apiConfigs.set('weather', {
       name: 'weather',

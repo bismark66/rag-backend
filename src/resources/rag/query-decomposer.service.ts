@@ -11,6 +11,23 @@ export class QueryDecomposerService {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   constructor(@Inject(ChatGroq) private readonly llm: ChatGroq) {}
 
+  /**
+   * QueryDecomposerService
+   * Uses the configured LLM to decompose a free-form user query into a list
+   * of atomic sub-queries. The LLM is instructed (via prompt) to return a JSON
+   * array of objects with fields: reformulatedQuery, requiresApi, apiName?, apiParams?
+   *
+   * Return shape:
+   * {
+   *   queries: Array<{
+   *     reformulatedQuery: string;
+   *     requiresApi: boolean;
+   *     apiName?: string;
+   *     apiParams?: any;
+   *   }>;
+   * }
+   */
+
   async decomposeAndReformulate(query: string): Promise<{
     queries: Array<{
       reformulatedQuery: string;

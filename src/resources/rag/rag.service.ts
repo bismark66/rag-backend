@@ -66,6 +66,19 @@ export class RagService implements OnModuleInit {
     this.conversations = new Map();
   }
 
+  /**
+   * RagService
+   * - Orchestrates the RAG + API pipeline for chat.
+   * - Converts DB messages into LangChain messages, dispatches greeting flows,
+   *   uses the QueryDecomposerService to split complex queries into tasks,
+   *   calls ApiService for external data, and invokes the RAG graph for retrieval + generation.
+   *
+   * Public methods used by controllers:
+   * - createConversation(userId?: string, title?: string): Promise<string>
+   * - getRecentConversations(userId?: string, limit?: number)
+   * - askQuestion(question: string, conversationId?: string, userId?: string)
+   */
+
   async onModuleInit() {
     await this.initializeServices();
   }
